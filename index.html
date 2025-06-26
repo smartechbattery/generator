@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Shop Contacts Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #4285F4;
+            --primary-dark: #3367d6;
+            --secondary: #34A853;
+            --whatsapp: #25D366;
+            --whatsapp-dark: #128C7E;
+            --rating: #FFB400;
+            --light: #f8f9fa;
+            --dark: #202124;
+            --gray: #5f6368;
+            --border: #dfe1e5;
+            --error: #EA4335;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: var(--dark);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+        
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .message-section label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        #whatsappMessage {
+            width: 100%;
+            min-height: 150px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.95em;
+            line-height: 1.5;
+            resize: vertical;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+            transition: border 0.3s;
+        }
+        
+        #whatsappMessage:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+        }
+        
+        .share-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-whatsapp {
+            background-color: var(--whatsapp);
+        }
+        
+        .btn-whatsapp:hover {
+            background-color: var(--whatsapp-dark);
+        }
+        
+        .btn-success {
+            background-color: var(--secondary);
+        }
+        
+        .btn-secondary {
+            background-color: var(--gray);
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            align-items: center;
+            width: 100%;
+        }
+        
+        #phoneNumber {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            flex: 1;
+            max-width: 300px;
+            font-size: 0.95rem;
+            transition: border 0.3s;
+        }
+        
+        #phoneNumber:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+        }
+        
+        .upload-section {
+            text-align: center;
+        }
+        
+        .filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 180px;
+        }
+        
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 0.9em;
+        }
+        
+        .filter-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background-color: white;
+            font-size: 0.9rem;
+            transition: border 0.3s;
+        }
+        
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+        }
+        
+        .shop-count {
+            background: var(--primary);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-left: auto;
+        }
+        
+        .shop-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        @media (max-width: 768px) {
+            .shop-card {
+                grid-template-columns: 1fr;
+            }
+            
+            .shop-image-container {
+                text-align: center;
+            }
+            
+            .filter-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .shop-count {
+                margin-left: 0;
+                text-align: center;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            #phoneNumber {
+                max-width: 100%;
+            }
+        }
+        
+        .shop-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        
+        .shop-image {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #eee;
+            align-self: center;
+        }
+        
+        .shop-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .shop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .shop-name {
+            font-size: 1.3rem;
+            margin: 0;
+            color: var(--primary);
+            font-weight: 500;
+            line-height: 1.3;
+        }
+        
+        .rating-badge {
+            display: inline-flex;
+            align-items: center;
+            background: var(--rating);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        
+        .rating-badge i {
+            margin-right: 5px;
+            font-size: 0.8em;
+        }
+        
+        .shop-type {
+            font-weight: 500;
+            color: var(--dark);
+            margin: 5px 0;
+            font-size: 0.95rem;
+        }
+        
+        .address {
+            color: var(--gray);
+            margin: 5px 0;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+        
+        .contact-links {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .contact-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            color: white;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        
+        .contact-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .contact-btn i {
+            margin-right: 8px;
+            font-size: 0.9em;
+        }
+        
+        .map-link {
+            color: var(--primary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            margin-top: 10px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        
+        .map-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+        
+        .map-link i {
+            margin-right: 5px;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .upload-btn {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s;
+            border: none;
+            font-size: 1rem;
+        }
+        
+        .upload-btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .upload-btn i {
+            margin-right: 8px;
+        }
+        
+        .instructions {
+            margin-top: 15px;
+            color: var(--gray);
+            font-size: 0.9em;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        #results {
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .no-results {
+            text-align: center;
+            color: var(--gray);
+            padding: 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .no-results i {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: var(--gray);
+        }
+        
+        .no-results h3 {
+            margin-top: 0;
+            color: var(--dark);
+        }
+        
+        .error-message {
+            color: var(--error);
+        }
+        
+        .preview-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .preview-title {
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+        
+        .preview-link {
+            word-break: break-all;
+            font-size: 0.85rem;
+            color: var(--primary);
+            line-height: 1.5;
+        }
+        
+        .shop-image-placeholder {
+            width: 120px;
+            height: 120px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+            font-size: 2rem;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-store"></i> Advanced Contacts Generator</h1>
+        
+        <div class="card message-section">
+            <label for="whatsappMessage">Your Custom WhatsApp Message:</label>
+            <textarea id="whatsappMessage" placeholder="Enter your message here...">We are SMARTECH Battery – Manufacturers of UPS & Inverter Lithium Batteries! ✨  
+📍 Located in Panvel, Navi Mumbai: https://g.co/kgs/vjRfBVb
+
+📲 Call now for the best deals!  
+📞 8888289817 | 📞 8454981224</textarea>
+            
+            <div class="preview-section">
+                <div class="preview-title">WhatsApp Share Link Preview:</div>
+                <div class="preview-link" id="whatsappLinkPreview"></div>
+            </div>
+            
+            <div class="share-options">
+                <button class="btn btn-whatsapp" id="shareToNew">
+                    <i class="fab fa-whatsapp"></i> Share to New Chat
+                </button>
+                
+                <button class="btn btn-secondary" id="copyLink">
+                    <i class="fas fa-copy"></i> Copy Share Link
+                </button>
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="phoneNumber" placeholder="Enter phone number with country code">
+                <button class="btn btn-whatsapp" id="shareToNumber">
+                    <i class="fab fa-whatsapp"></i> Send to This Number
+                </button>
+            </div>
+        </div>
+        
+        <div class="card upload-section">
+            <label for="fileInput" class="upload-btn">
+                <i class="fas fa-file-excel"></i> Upload Contacts Excel File
+            </label>
+            <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" />
+            <div class="instructions">
+                Upload your Excel file (XLSX, XLS, or CSV format) containing shop contact information to generate contact cards with WhatsApp sharing options.
+            </div>
+        </div>
+        
+        <div class="card filter-section" id="filterSection" style="display: none;">
+            <div class="filter-group">
+                <label for="stateFilter">State</label>
+                <select id="stateFilter">
+                    <option value="">All States</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="cityFilter">City</label>
+                <select id="cityFilter">
+                    <option value="">All Cities</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="localityFilter">Locality</label>
+                <select id="localityFilter">
+                    <option value="">All Localities</option>
+                </select>
+            </div>
+            
+            <button class="btn btn-primary" id="applyFilter">
+                <i class="fas fa-filter"></i> Apply Filters
+            </button>
+            
+            <button class="btn btn-secondary" id="resetFilter">
+                <i class="fas fa-redo"></i> Reset
+            </button>
+            
+            <div class="shop-count" id="shopCount">
+                0 Shops
+            </div>
+        </div>
+        
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>Processing your file...</p>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Column mapping based on your requirements
+        const COLUMNS = {
+            STATE: 0,        // A
+            CITY: 1,         // B
+            LOCALITY: 2,     // C
+            POPULATION: 3,   // D
+            MAP_URL: 4,      // E
+            SHOP_NAME: 5,    // F
+            RATING: 6,       // G
+            SHOP_TYPE: 8,    // I
+            ADDRESS: 10,     // K
+            MOBILE_NO: 14,   // O
+            SHOP_IMAGE: 15   // P
+        };
+
+        // Store extracted contacts and filter options
+        let shopContacts = [];
+        let allShops = [];
+        let states = new Set();
+        let cities = new Set();
+        let localities = new Set();
+        
+        // Update WhatsApp link preview
+        function updateWhatsAppLinkPreview() {
+            const message = document.getElementById('whatsappMessage').value;
+            const encodedMessage = encodeURIComponent(message);
+            const previewLink = `https://api.whatsapp.com/send?text=${encodedMessage}`;
+            document.getElementById('whatsappLinkPreview').textContent = previewLink;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateWhatsAppLinkPreview();
+            
+            // Update preview when message changes
+            document.getElementById('whatsappMessage').addEventListener('input', updateWhatsAppLinkPreview);
+            
+            // Share to new chat
+            document.getElementById('shareToNew').addEventListener('click', function() {
+                const message = document.getElementById('whatsappMessage').value;
+                if (message.trim() === '') {
+                    alert('Please enter a message to share');
+                    return;
+                }
+                
+                const encodedMessage = encodeURIComponent(message);
+                window.open(`https://api.whatsapp.com/send?text=${encodedMessage}`, '_blank');
+            });
+            
+            // Copy link to clipboard
+            document.getElementById('copyLink').addEventListener('click', function() {
+                const message = document.getElementById('whatsappMessage').value;
+                if (message.trim() === '') {
+                    alert('Please enter a message to share');
+                    return;
+                }
+                
+                const encodedMessage = encodeURIComponent(message);
+                const whatsappLink = `https://api.whatsapp.com/send?text=${encodedMessage}`;
+                
+                navigator.clipboard.writeText(whatsappLink).then(function() {
+                    alert('WhatsApp link copied to clipboard!');
+                }, function() {
+                    alert('Failed to copy link. Please try again.');
+                });
+            });
+            
+            // Share to specific number
+            document.getElementById('shareToNumber').addEventListener('click', function() {
+                const message = document.getElementById('whatsappMessage').value;
+                const phoneNumber = document.getElementById('phoneNumber').value.trim();
+                
+                if (message.trim() === '') {
+                    alert('Please enter a message to share');
+                    return;
+                }
+                
+                if (phoneNumber === '') {
+                    alert('Please enter a phone number');
+                    return;
+                }
+                
+                // Clean the phone number
+                const cleanNumber = phoneNumber.replace(/\D/g, '');
+                if (cleanNumber.length < 10) {
+                    alert('Please enter a valid phone number with country code');
+                    return;
+                }
+                
+                const encodedMessage = encodeURIComponent(message);
+                window.open(`https://api.whatsapp.com/send?phone=${cleanNumber}&text=${encodedMessage}`, '_blank');
+            });
+            
+            // Apply filters
+            document.getElementById('applyFilter').addEventListener('click', applyFilters);
+            
+            // Reset filters
+            document.getElementById('resetFilter').addEventListener('click', resetFilters);
+            
+            // State filter change
+            document.getElementById('stateFilter').addEventListener('change', function() {
+                updateCityFilterOptions();
+                updateLocalityFilterOptions();
+            });
+            
+            // City filter change
+            document.getElementById('cityFilter').addEventListener('change', function() {
+                updateLocalityFilterOptions();
+            });
+        });
+
+        // Update city filter options based on selected state
+        function updateCityFilterOptions() {
+            const stateFilter = document.getElementById('stateFilter').value;
+            const cityFilter = document.getElementById('cityFilter');
+            
+            // Clear current options
+            cityFilter.innerHTML = '<option value="">All Cities</option>';
+            
+            if (stateFilter) {
+                // Get unique cities for selected state
+                const citiesInState = new Set();
+                allShops.forEach(shop => {
+                    if (shop.state === stateFilter) {
+                        citiesInState.add(shop.city);
+                    }
+                });
+                
+                // Add cities to dropdown
+                Array.from(citiesInState).sort().forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    cityFilter.appendChild(option);
+                });
+            } else {
+                // Show all cities
+                Array.from(cities).sort().forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    cityFilter.appendChild(option);
+                });
+            }
+        }
+        
+        // Update locality filter options based on selected state and city
+        function updateLocalityFilterOptions() {
+            const stateFilter = document.getElementById('stateFilter').value;
+            const cityFilter = document.getElementById('cityFilter').value;
+            const localityFilter = document.getElementById('localityFilter');
+            
+            // Clear current options
+            localityFilter.innerHTML = '<option value="">All Localities</option>';
+            
+            if (cityFilter) {
+                // Get unique localities for selected city
+                const localitiesInCity = new Set();
+                allShops.forEach(shop => {
+                    if ((!stateFilter || shop.state === stateFilter) && shop.city === cityFilter) {
+                        localitiesInCity.add(shop.locality);
+                    }
+                });
+                
+                // Add localities to dropdown
+                Array.from(localitiesInCity).sort().forEach(locality => {
+                    const option = document.createElement('option');
+                    option.value = locality;
+                    option.textContent = locality;
+                    localityFilter.appendChild(option);
+                });
+            } else if (stateFilter) {
+                // Get unique localities for selected state
+                const localitiesInState = new Set();
+                allShops.forEach(shop => {
+                    if (shop.state === stateFilter) {
+                        localitiesInState.add(shop.locality);
+                    }
+                });
+                
+                // Add localities to dropdown
+                Array.from(localitiesInState).sort().forEach(locality => {
+                    const option = document.createElement('option');
+                    option.value = locality;
+                    option.textContent = locality;
+                    localityFilter.appendChild(option);
+                });
+            } else {
+                // Show all localities
+                Array.from(localities).sort().forEach(locality => {
+                    const option = document.createElement('option');
+                    option.value = locality;
+                    option.textContent = locality;
+                    localityFilter.appendChild(option);
+                });
+            }
+        }
+        
+        // Apply the selected filters
+        function applyFilters() {
+            const stateFilter = document.getElementById('stateFilter').value;
+            const cityFilter = document.getElementById('cityFilter').value;
+            const localityFilter = document.getElementById('localityFilter').value;
+            
+            // Filter shops based on selections
+            shopContacts = allShops.filter(shop => {
+                return (!stateFilter || shop.state === stateFilter) &&
+                       (!cityFilter || shop.city === cityFilter) &&
+                       (!localityFilter || shop.locality === localityFilter);
+            });
+            
+            // Update the display
+            displayShops();
+        }
+        
+        // Reset all filters
+        function resetFilters() {
+            document.getElementById('stateFilter').value = '';
+            document.getElementById('cityFilter').value = '';
+            document.getElementById('localityFilter').value = '';
+            
+            // Reset city and locality dropdowns
+            updateCityFilterOptions();
+            updateLocalityFilterOptions();
+            
+            // Show all shops
+            shopContacts = [...allShops];
+            displayShops();
+        }
+        
+        // Update shop count display
+        function updateShopCount() {
+            document.getElementById('shopCount').textContent = `${shopContacts.length} Shop${shopContacts.length !== 1 ? 's' : ''}`;
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // Show loading indicator
+            document.querySelector('.loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('filterSection').style.display = 'none';
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Get the first sheet
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    
+                    // Convert to JSON
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    
+                    // Process the data
+                    processData(jsonData);
+                } catch (error) {
+                    showError("Error processing file. Please make sure it's a valid Excel file.");
+                    console.error(error);
+                } finally {
+                    document.querySelector('.loading').style.display = 'none';
+                }
+            };
+            
+            reader.onerror = function() {
+                showError("Error reading file. Please try again.");
+                document.querySelector('.loading').style.display = 'none';
+            };
+            
+            reader.readAsArrayBuffer(file);
+        });
+
+        function processData(data) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            
+            // Reset all filter data
+            allShops = [];
+            states.clear();
+            cities.clear();
+            localities.clear();
+            shopContacts = [];
+            
+            // Skip header row and process each row
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (!row || row.length < 16) continue; // Ensure we have enough columns (now checking for column P)
+                
+                // Extract data using our column mapping
+                const state = row[COLUMNS.STATE] || '';
+                const city = row[COLUMNS.CITY] || '';
+                const locality = row[COLUMNS.LOCALITY] || '';
+                const mapUrl = row[COLUMNS.MAP_URL] || '#';
+                const name = row[COLUMNS.SHOP_NAME] || 'Shop Name Not Available';
+                const rating = row[COLUMNS.RATING] || '';
+                const type = row[COLUMNS.SHOP_TYPE] || '';
+                const address = row[COLUMNS.ADDRESS] || '';
+                let phone = row[COLUMNS.MOBILE_NO] ? row[COLUMNS.MOBILE_NO].toString() : '';
+                const imageUrl = row[COLUMNS.SHOP_IMAGE] || '';
+                
+                // Clean and validate phone number
+                phone = cleanIndianPhoneNumber(phone);
+                
+                // Skip if no valid phone number
+                if (!phone) continue;
+                
+                // Add to filter options
+                if (state) states.add(state);
+                if (city) cities.add(city);
+                if (locality) localities.add(locality);
+                
+                // Create shop object
+                const shop = {
+                    state,
+                    city,
+                    locality,
+                    mapUrl,
+                    name,
+                    rating,
+                    type,
+                    address,
+                    phone,
+                    imageUrl,
+                    formattedPhone: formatIndianPhoneNumber(phone)
+                };
+                
+                allShops.push(shop);
+                shopContacts.push(shop);
+            }
+            
+            if (allShops.length === 0) {
+                showError("No valid shop data found. Please check that your Excel file contains shop information with phone numbers in column O.");
+                return;
+            }
+            
+            // Update filter dropdowns
+            updateFilterDropdowns();
+            
+            // Show filter section
+            document.getElementById('filterSection').style.display = 'flex';
+            
+            // Display all shops initially
+            displayShops();
+        }
+        
+        // Update filter dropdowns with all available options
+        function updateFilterDropdowns() {
+            const stateFilter = document.getElementById('stateFilter');
+            const cityFilter = document.getElementById('cityFilter');
+            const localityFilter = document.getElementById('localityFilter');
+            
+            // Clear current options
+            stateFilter.innerHTML = '<option value="">All States</option>';
+            cityFilter.innerHTML = '<option value="">All Cities</option>';
+            localityFilter.innerHTML = '<option value="">All Localities</option>';
+            
+            // Add states
+            Array.from(states).sort().forEach(state => {
+                const option = document.createElement('option');
+                option.value = state;
+                option.textContent = state;
+                stateFilter.appendChild(option);
+            });
+            
+            // Add cities
+            Array.from(cities).sort().forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                cityFilter.appendChild(option);
+            });
+            
+            // Add localities
+            Array.from(localities).sort().forEach(locality => {
+                const option = document.createElement('option');
+                option.value = locality;
+                option.textContent = locality;
+                localityFilter.appendChild(option);
+            });
+        }
+        
+        // Display the filtered shops
+        function displayShops() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            
+            if (shopContacts.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-info-circle"></i>
+                        <h3>No shops match your filters</h3>
+                        <p>Try adjusting your filter criteria or reset the filters.</p>
+                    </div>
+                `;
+                updateShopCount();
+                return;
+            }
+            
+            // Create HTML for each shop
+            shopContacts.forEach(shop => {
+                const shopCard = document.createElement('div');
+                shopCard.className = 'shop-card';
+                
+                // Create image HTML - use shop image if available, otherwise use placeholder
+                const imageHtml = shop.imageUrl ? 
+                    `<img src="${shop.imageUrl}" alt="${shop.name}" class="shop-image" onerror="this.onerror=null;this.src='';this.parentNode.innerHTML='<div class=\'shop-image-placeholder\'><i class=\'fas fa-store\'></i></div>';">` :
+                    `<div class="shop-image-placeholder"><i class="fas fa-store"></i></div>`;
+                
+                shopCard.innerHTML = `
+                    <div class="shop-image-container">
+                        ${imageHtml}
+                    </div>
+                    <div class="shop-info">
+                        <div class="shop-header">
+                            <h2 class="shop-name">${shop.name}</h2>
+                            ${shop.rating ? `<span class="rating-badge"><i class="fas fa-star"></i> ${shop.rating}</span>` : ''}
+                        </div>
+                        <div class="address">
+                            <i class="fas fa-map-marker-alt"></i> ${[shop.locality, shop.city, shop.state].filter(Boolean).join(', ')}
+                        </div>
+                        ${shop.type ? `<div class="shop-type">${shop.type}</div>` : ''}
+                        ${shop.address ? `<div class="address">${shop.address}</div>` : ''}
+                        <div class="contact-links">
+                            <a href="tel:${shop.phone.startsWith('+') ? '' : '+'}${shop.phone}" class="contact-btn btn-success">
+                                <i class="fas fa-phone-alt"></i> ${shop.formattedPhone}
+                            </a>
+                            <button class="contact-btn btn-whatsapp share-to-contact" data-phone="${shop.phone}">
+                                <i class="fab fa-whatsapp"></i> Send Our Message
+                            </button>
+                        </div>
+                        ${shop.mapUrl !== '#' ? `<a href="${shop.mapUrl}" class="map-link" target="_blank">
+                            <i class="fas fa-external-link-alt"></i> View on Google Maps
+                        </a>` : ''}
+                    </div>
+                `;
+                
+                resultsDiv.appendChild(shopCard);
+            });
+            
+            // Add event listeners to all share buttons
+            document.querySelectorAll('.share-to-contact').forEach(button => {
+                button.addEventListener('click', function() {
+                    const phone = this.getAttribute('data-phone');
+                    const message = document.getElementById('whatsappMessage').value;
+                    
+                    if (message.trim() === '') {
+                        alert('Please enter a message in the text box above');
+                        return;
+                    }
+                    
+                    const encodedMessage = encodeURIComponent(message);
+                    window.open(`https://api.whatsapp.com/send?phone=91${phone}&text=${encodedMessage}`, '_blank');
+                });
+            });
+            
+            // Update shop count
+            updateShopCount();
+            
+            // Show results
+            resultsDiv.style.display = 'block';
+        }
+        
+        function cleanIndianPhoneNumber(phone) {
+            if (!phone || phone.toString().trim() === '') return '';
+            
+            // Remove all non-digit characters
+            phone = phone.toString().replace(/\D/g, '');
+            
+            // Handle cases where number might be in format "093226 90958"
+            if (phone.length === 11 && phone.startsWith('0')) {
+                phone = phone.substring(1);
+            }
+            
+            // Handle mobile numbers (10 digits)
+            if (phone.length === 10) {
+                return phone;
+            }
+            
+            // Handle numbers with country code (91)
+            if (phone.length === 12 && phone.startsWith('91')) {
+                return phone.substring(2);
+            }
+            
+            // Handle landline numbers (with STD code)
+            if (phone.length >= 6 && phone.length <= 11) {
+                return phone;
+            }
+            
+            // If doesn't match any valid pattern, return empty
+            return '';
+        }
+        
+        function formatIndianPhoneNumber(phone) {
+            if (!phone) return '';
+            
+            // Format mobile numbers (10 digits)
+            if (phone.length === 10) {
+                return phone.replace(/(\d{5})(\d{5})/, '$1 $2');
+            }
+            
+            // Format landline numbers
+            if (phone.length >= 6 && phone.length <= 11) {
+                if (phone.length <= 8) {
+                    return phone.replace(/(\d{2})(\d{2})(\d{4})/, '$1 $2 $3');
+                } else {
+                    return phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
+                }
+            }
+            
+            // Return as is for other cases
+            return phone;
+        }
+        
+        function showError(message) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-exclamation-triangle error-message"></i>
+                    <h3>Error</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+            resultsDiv.style.display = 'block';
+        }
+    </script>
+	<p style="text-align: center;">Developed by: Godwin</p>
+</body>
+</html>
