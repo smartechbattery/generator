@@ -1001,14 +1001,14 @@
                         </div>
                         ${shop.type ? `<div class="shop-type">${shop.type}</div>` : ''}
                         ${shop.address ? `<div class="address">${shop.address}</div>` : ''}
-                        <div class="contact-links">
-                           <a href="tel:${shop.phone.startsWith('+') ? '' : '+91'}${shop.phone}" class="contact-btn btn-success">
-                                <i class="fas fa-phone-alt"></i> ${shop.formattedPhone}
-                            </a>
-                            <button class="contact-btn btn-whatsapp share-to-contact" data-phone="${shop.phone}">
-                                <i class="fab fa-whatsapp"></i> Send Our Message
-                            </button>
-                        </div>
+<div class="contact-links">
+    <a href="tel:${shop.phone.startsWith('+') ? '' : '+91'}${shop.phone}" class="contact-btn btn-success">
+        <i class="fas fa-phone-alt"></i> ${shop.formattedPhone}
+    </a>
+    <button class="contact-btn btn-whatsapp share-to-contact" data-phone="${shop.phone}">
+        <i class="fab fa-whatsapp"></i> Send Our Message
+    </button>
+</div>
                         ${shop.mapUrl !== '#' ? `<a href="${shop.mapUrl}" class="map-link" target="_blank">
                             <i class="fas fa-external-link-alt"></i> View on Google Maps
                         </a>` : ''}
