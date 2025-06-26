@@ -1002,9 +1002,9 @@
                         ${shop.type ? `<div class="shop-type">${shop.type}</div>` : ''}
                         ${shop.address ? `<div class="address">${shop.address}</div>` : ''}
 <div class="contact-links">
-    <a href="tel:${shop.phone.startsWith('+') ? '' : '+91'}${shop.phone}" class="contact-btn btn-success">
-        <i class="fas fa-phone-alt"></i> ${shop.formattedPhone}
-    </a>
+    <a href="tel:+91${shop.phone}" class="contact-btn btn-success">
+    <i class="fas fa-phone-alt"></i> ${shop.formattedPhone}
+</a>
     <button class="contact-btn btn-whatsapp share-to-contact" data-phone="${shop.phone}">
         <i class="fab fa-whatsapp"></i> Send Our Message
     </button>
@@ -1041,56 +1041,41 @@
             resultsDiv.style.display = 'block';
         }
         
-        function cleanIndianPhoneNumber(phone) {
-            if (!phone || phone.toString().trim() === '') return '';
-            
-            // Remove all non-digit characters
-            phone = phone.toString().replace(/\D/g, '');
-            
-            // Handle cases where number might be in format "093226 90958"
-            if (phone.length === 11 && phone.startsWith('0')) {
-                phone = phone.substring(1);
-            }
-            
-            // Handle mobile numbers (10 digits)
-            if (phone.length === 10) {
-                return phone;
-            }
-            
-            // Handle numbers with country code (91)
-            if (phone.length === 12 && phone.startsWith('91')) {
-                return phone.substring(2);
-            }
-            
-            // Handle landline numbers (with STD code)
-            if (phone.length >= 6 && phone.length <= 11) {
-                return phone;
-            }
-            
-            // If doesn't match any valid pattern, return empty
-            return '';
-        }
-        
+      function cleanIndianPhoneNumber(phone) {
+    if (!phone || phone.toString().trim() === '') return '';
+    
+    // Remove all non-digit characters and any leading +
+    phone = phone.toString().replace(/\D/g, '');
+    
+    // Remove leading 0 if present (common in Indian numbers)
+    if (phone.startsWith('0')) {
+        phone = phone.substring(1);
+    }
+    
+    // Remove country code (91) if present
+    if (phone.startsWith('91') && phone.length === 12) {
+        phone = phone.substring(2);
+    }
+    
+    // Validate the number - must be 10 digits for mobile, or 6-11 digits for landline
+    if ((phone.length === 10) || (phone.length >= 6 && phone.length <= 11)) {
+        return phone;
+    }
+    
+    // If doesn't match any valid pattern, return empty
+    return '';
+}
         function formatIndianPhoneNumber(phone) {
-            if (!phone) return '';
-            
-            // Format mobile numbers (10 digits)
-            if (phone.length === 10) {
-                return phone.replace(/(\d{5})(\d{5})/, '$1 $2');
-            }
-            
-            // Format landline numbers
-            if (phone.length >= 6 && phone.length <= 11) {
-                if (phone.length <= 8) {
-                    return phone.replace(/(\d{2})(\d{2})(\d{4})/, '$1 $2 $3');
-                } else {
-                    return phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
-                }
-            }
-            
-            // Return as is for other cases
-            return phone;
-        }
+    if (!phone) return '';
+    
+    // Format mobile numbers (10 digits) as 91 XXXX XXXXX
+    if (phone.length === 10) {
+        return `91 ${phone.substring(0, 5)} ${phone.substring(5)}`;
+    }
+    
+    // Format landline numbers
+    return phone; // or add specific formatting for landlines if needed
+}
         
         function showError(message) {
             const resultsDiv = document.getElementById('results');
