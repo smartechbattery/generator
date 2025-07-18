@@ -484,6 +484,18 @@
             color: var(--gray);
             font-size: 2rem;
         }
+
+        .data-source-badge {
+            display: inline-flex;
+            align-items: center;
+            background: var(--secondary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.9em;
+            font-weight: 500;
+            margin-left: 10px;
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -555,6 +567,13 @@
                 </select>
             </div>
             
+            <div class="filter-group">
+                <label for="dataSourceFilter">Data Source</label>
+                <select id="dataSourceFilter">
+                    <option value="">All Sources</option>
+                </select>
+            </div>
+            
             <button class="btn btn-primary" id="applyFilter">
                 <i class="fas fa-filter"></i> Apply Filters
             </button>
@@ -582,13 +601,14 @@
             STATE: 0,        // A
             CITY: 1,         // B
             LOCALITY: 2,     // C
-            POPULATION: 3,   // D
+            DATA_SOURCE: 3,  // D
             MAP_URL: 4,      // E
             SHOP_NAME: 5,    // F
             RATING: 6,       // G
+            USERS: 7,        // H
             SHOP_TYPE: 8,    // I
             ADDRESS: 10,     // K
-            MOBILE_NO: 14,   // O
+            MOBILE_NO: 14,  // O
             SHOP_IMAGE: 15   // P
         };
 
@@ -598,6 +618,7 @@
         let states = new Set();
         let cities = new Set();
         let localities = new Set();
+        let dataSources = new Set();
         
         // Update WhatsApp link preview
         function updateWhatsAppLinkPreview() {
@@ -780,12 +801,14 @@
             const stateFilter = document.getElementById('stateFilter').value;
             const cityFilter = document.getElementById('cityFilter').value;
             const localityFilter = document.getElementById('localityFilter').value;
+            const dataSourceFilter = document.getElementById('dataSourceFilter').value;
             
             // Filter shops based on selections
             shopContacts = allShops.filter(shop => {
                 return (!stateFilter || shop.state === stateFilter) &&
                        (!cityFilter || shop.city === cityFilter) &&
-                       (!localityFilter || shop.locality === localityFilter);
+                       (!localityFilter || shop.locality === localityFilter) &&
+                       (!dataSourceFilter || shop.dataSource === dataSourceFilter);
             });
             
             // Update the display
@@ -797,6 +820,7 @@
             document.getElementById('stateFilter').value = '';
             document.getElementById('cityFilter').value = '';
             document.getElementById('localityFilter').value = '';
+            document.getElementById('dataSourceFilter').value = '';
             
             // Reset city and locality dropdowns
             updateCityFilterOptions();
@@ -827,13 +851,15 @@
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     
-                    // Get the first sheet
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    // Process all sheets in the workbook
+                    const jsonData = [];
+                    workbook.SheetNames.forEach(sheetName => {
+                        const worksheet = workbook.Sheets[sheetName];
+                        const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        jsonData.push(...sheetData.slice(1)); // Skip header row for each sheet
+                    });
                     
-                    // Convert to JSON
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-                    
-                    // Process the data
+                    // Process the combined data
                     processData(jsonData);
                 } catch (error) {
                     showError("Error processing file. Please make sure it's a valid Excel file.");
@@ -860,18 +886,20 @@
             states.clear();
             cities.clear();
             localities.clear();
+            dataSources.clear();
             shopContacts = [];
             
-            // Skip header row and process each row
-            for (let i = 1; i < data.length; i++) {
+            // Process each row
+            for (let i = 0; i < data.length; i++) {
                 const row = data[i];
-                if (!row || row.length < 16) continue; // Ensure we have enough columns (now checking for column P)
+                if (!row || !row[COLUMNS.SHOP_NAME]) continue;
                 
                 // Extract data using our column mapping
                 const state = row[COLUMNS.STATE] || '';
                 const city = row[COLUMNS.CITY] || '';
                 const locality = row[COLUMNS.LOCALITY] || '';
-                const mapUrl = row[COLUMNS.MAP_URL] || '#';
+                const dataSource = row[COLUMNS.DATA_SOURCE] || '';
+                const mapUrl = row[COLUMNS.MAP_URL] || '';
                 const name = row[COLUMNS.SHOP_NAME] || 'Shop Name Not Available';
                 const rating = row[COLUMNS.RATING] || '';
                 const type = row[COLUMNS.SHOP_TYPE] || '';
@@ -889,12 +917,14 @@
                 if (state) states.add(state);
                 if (city) cities.add(city);
                 if (locality) localities.add(locality);
+                if (dataSource) dataSources.add(dataSource);
                 
                 // Create shop object
                 const shop = {
                     state,
                     city,
                     locality,
+                    dataSource,
                     mapUrl,
                     name,
                     rating,
@@ -929,11 +959,13 @@
             const stateFilter = document.getElementById('stateFilter');
             const cityFilter = document.getElementById('cityFilter');
             const localityFilter = document.getElementById('localityFilter');
+            const dataSourceFilter = document.getElementById('dataSourceFilter');
             
             // Clear current options
             stateFilter.innerHTML = '<option value="">All States</option>';
             cityFilter.innerHTML = '<option value="">All Cities</option>';
             localityFilter.innerHTML = '<option value="">All Localities</option>';
+            dataSourceFilter.innerHTML = '<option value="">All Sources</option>';
             
             // Add states
             Array.from(states).sort().forEach(state => {
@@ -957,6 +989,14 @@
                 option.value = locality;
                 option.textContent = locality;
                 localityFilter.appendChild(option);
+            });
+            
+            // Add data sources
+            Array.from(dataSources).sort().forEach(source => {
+                const option = document.createElement('option');
+                option.value = source;
+                option.textContent = source;
+                dataSourceFilter.appendChild(option);
             });
         }
         
@@ -983,7 +1023,7 @@
                 shopCard.className = 'shop-card';
                 
                 // Create image HTML - use shop image if available, otherwise use placeholder
-                const imageHtml = shop.imageUrl ? 
+                const imageHtml = shop.imageUrl && !shop.imageUrl.includes('default_user.png') ? 
                     `<img src="${shop.imageUrl}" alt="${shop.name}" class="shop-image" onerror="this.onerror=null;this.src='';this.parentNode.innerHTML='<div class=\'shop-image-placeholder\'><i class=\'fas fa-store\'></i></div>';">` :
                     `<div class="shop-image-placeholder"><i class="fas fa-store"></i></div>`;
                 
@@ -995,21 +1035,22 @@
                         <div class="shop-header">
                             <h2 class="shop-name">${shop.name}</h2>
                             ${shop.rating ? `<span class="rating-badge"><i class="fas fa-star"></i> ${shop.rating}</span>` : ''}
+                            ${shop.dataSource ? `<span class="data-source-badge"><i class="fas fa-database"></i> ${shop.dataSource}</span>` : ''}
                         </div>
                         <div class="address">
                             <i class="fas fa-map-marker-alt"></i> ${[shop.locality, shop.city, shop.state].filter(Boolean).join(', ')}
                         </div>
                         ${shop.type ? `<div class="shop-type">${shop.type}</div>` : ''}
                         ${shop.address ? `<div class="address">${shop.address}</div>` : ''}
-<div class="contact-links">
-    <a href="tel:+91${shop.phone}" class="contact-btn btn-success">
-    <i class="fas fa-phone-alt"></i> ${shop.formattedPhone}
-</a>
-    <button class="contact-btn btn-whatsapp share-to-contact" data-phone="${shop.phone}">
-        <i class="fab fa-whatsapp"></i> Send Our Message
-    </button>
-</div>
-                        ${shop.mapUrl !== '#' ? `<a href="${shop.mapUrl}" class="map-link" target="_blank">
+                        <div class="contact-links">
+                            <a href="tel:+91${shop.phone}" class="contact-btn btn-success">
+                                <i class="fas fa-phone-alt"></i> ${shop.formattedPhone}
+                            </a>
+                            <button class="contact-btn btn-whatsapp share-to-contact" data-phone="${shop.phone}">
+                                <i class="fab fa-whatsapp"></i> Send Our Message
+                            </button>
+                        </div>
+                        ${shop.mapUrl && !shop.mapUrl.includes('default_user.png') ? `<a href="${shop.mapUrl}" class="map-link" target="_blank">
                             <i class="fas fa-external-link-alt"></i> View on Google Maps
                         </a>` : ''}
                     </div>
@@ -1041,41 +1082,56 @@
             resultsDiv.style.display = 'block';
         }
         
-      function cleanIndianPhoneNumber(phone) {
-    if (!phone || phone.toString().trim() === '') return '';
-    
-    // Remove all non-digit characters and any leading +
-    phone = phone.toString().replace(/\D/g, '');
-    
-    // Remove leading 0 if present (common in Indian numbers)
-    if (phone.startsWith('0')) {
-        phone = phone.substring(1);
-    }
-    
-    // Remove country code (91) if present
-    if (phone.startsWith('91') && phone.length === 12) {
-        phone = phone.substring(2);
-    }
-    
-    // Validate the number - must be 10 digits for mobile, or 6-11 digits for landline
-    if ((phone.length === 10) || (phone.length >= 6 && phone.length <= 11)) {
-        return phone;
-    }
-    
-    // If doesn't match any valid pattern, return empty
-    return '';
-}
+        function cleanIndianPhoneNumber(phone) {
+            if (!phone || phone.toString().trim() === '') return '';
+            
+            // Remove all non-digit characters
+            phone = phone.toString().replace(/\D/g, '');
+            
+            // Handle cases where number might be in format "093226 90958" or "9022226042"
+            if (phone.length === 11 && phone.startsWith('0')) {
+                phone = phone.substring(1);
+            }
+            
+            // Handle mobile numbers (10 digits)
+            if (phone.length === 10) {
+                return phone;
+            }
+            
+            // Handle numbers with country code (91)
+            if (phone.length === 12 && phone.startsWith('91')) {
+                return phone.substring(2);
+            }
+            
+            // Handle landline numbers (with STD code)
+            if (phone.length >= 6 && phone.length <= 11) {
+                return phone;
+            }
+            
+            // If doesn't match any valid pattern, return empty
+            return '';
+        }
+        
         function formatIndianPhoneNumber(phone) {
-    if (!phone) return '';
-    
-    // Format mobile numbers (10 digits) as 91 XXXX XXXXX
-    if (phone.length === 10) {
-        return `91 ${phone.substring(0, 5)} ${phone.substring(5)}`;
-    }
-    
-    // Format landline numbers
-    return phone; // or add specific formatting for landlines if needed
-}
+            if (!phone) return '';
+            
+            // Format mobile numbers (10 digits)
+            if (phone.length === 10) {
+                return phone.replace(/(\d{5})(\d{5})/, '$1 $2');
+            }
+            
+            // Format landline numbers
+            if (phone.length >= 6 && phone.length <= 11) {
+                if (phone.length <= 8) {
+                    return phone.replace(/(\d{2})(\d{2})(\d{4})/, '$1 $2 $3');
+                } else {
+                    return phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
+                }
+            }
+            
+            // Return as is for other cases
+            return phone;
+        }
         
         function showError(message) {
             const resultsDiv = document.getElementById('results');
@@ -1089,6 +1145,6 @@
             resultsDiv.style.display = 'block';
         }
     </script>
-	<p style="text-align: center;">Developed by: Godwin</p>
+    <p style="text-align: center;">Developed by: Godwin</p>
 </body>
 </html>
